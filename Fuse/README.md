@@ -65,3 +65,11 @@ WINRM       10.129.2.5      5985   FUSE             [+]
 ```bash
 ❯ evil-winrm -i $IP -u svc-print -p '$fab@s3Rv1ce$1'
 ```
+
+## Reference
+* https://www.tarlogic.com/blog/seloaddriverprivilege-privilege-escalation/
+* https://www.hackingarticles.in/fuse-hackthebox-walkthrough/
+* https://github.com/Kyuu-Ji/htb-write-up/blob/master/fuse/write-up-fuse.md
+* https://0xn1ghtr1ngs.github.io/posts/Fuse-HTB/
+* https://snowscan.io/htb-writeup-fuse/#
+* https://chr0x6eos.github.io/2020/10/31/htb-Fuse.html
