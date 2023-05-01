@@ -68,11 +68,18 @@ evil-winrm -i $IP -u svc-print -p '$fab@s3Rv1ce$1'
 
 ## Reference
 * https://www.tarlogic.com/blog/seloaddriverprivilege-privilege-escalation/
+* https://0xdf.gitlab.io/2020/10/31/htb-fuse.html#priv-svc-print--system
 * https://www.hackingarticles.in/fuse-hackthebox-walkthrough/
 * https://github.com/Kyuu-Ji/htb-write-up/blob/master/fuse/write-up-fuse.md
+* https://www.secjuice.com/htb-fuse-walkthrough/
 * https://0xn1ghtr1ngs.github.io/posts/Fuse-HTB/
-* https://snowscan.io/htb-writeup-fuse/#
+* https://snowscan.io/htb-writeup-fuse/
 * https://chr0x6eos.github.io/2020/10/31/htb-Fuse.html
+* https://github.com/FuzzySecurity/Capcom-Rootkit
+* https://fuzzysecurity.com/tutorials/28.html
+* https://steflan-security.com/hack-the-box-fuse-walkthrough/
+* https://github.com/A1vinSmith/htb-scripts
+* https://initone.dz/htb-walkthrough-fuse/
 
 ## Privilege Escalation
 ### Method 1: SeLoadDriverPrivilege
