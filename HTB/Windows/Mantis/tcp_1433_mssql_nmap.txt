@@ -1,0 +1,121 @@
+# Nmap 7.93 scan initiated Fri May 12 12:00:21 2023 as: nmap -vv --reason -Pn -T4 -sV -p 1433 "--script=banner,(ms-sql* or ssl*) and not (brute or broadcast or dos or external or fuzzer)" --script-args=mssql.instance-port=1433,mssql.username=sa,mssql.password=sa -oN /home/kali/Documents/OSEP/HTB/Windows/Mantis/results/10.129.71.224/scans/tcp1433/tcp_1433_mssql_nmap.txt -oX /home/kali/Documents/OSEP/HTB/Windows/Mantis/results/10.129.71.224/scans/tcp1433/xml/tcp_1433_mssql_nmap.xml 10.129.71.224
+Nmap scan report for 10.129.71.224
+Host is up, received user-set (0.21s latency).
+Scanned at 2023-05-12 12:00:24 NZST for 37s
+
+Bug in ms-sql-dac: no string output.
+Bug in ms-sql-hasdbaccess: no string output.
+PORT     STATE SERVICE  REASON          VERSION
+1433/tcp open  ms-sql-s syn-ack ttl 127 Microsoft SQL Server 2014 12.00.2000.00; RTM
+| ms-sql-info: 
+|   10.129.71.224:1433: 
+|     Version: 
+|       name: Microsoft SQL Server 2014 RTM
+|       number: 12.00.2000.00
+|       Product: Microsoft SQL Server 2014
+|       Service pack level: RTM
+|       Post-SP patches applied: false
+|_    TCP port: 1433
+| ssl-enum-ciphers: 
+|   SSLv3: 
+|     ciphers: 
+|       TLS_RSA_WITH_RC4_128_SHA (rsa 1024) - F
+|       TLS_RSA_WITH_3DES_EDE_CBC_SHA (rsa 1024) - F
+|       TLS_RSA_WITH_RC4_128_MD5 (rsa 1024) - F
+|     compressors: 
+|       NULL
+|     cipher preference: server
+|     warnings: 
+|       64-bit block cipher 3DES vulnerable to SWEET32 attack
+|       Broken cipher RC4 is deprecated by RFC 7465
+|       CBC-mode cipher in SSLv3 (CVE-2014-3566)
+|       Ciphersuite uses MD5 for message integrity
+|       Forward Secrecy not supported by any cipher
+|       Insecure certificate signature (SHA1), score capped at F
+|   TLSv1.0: 
+|     ciphers: 
+|       TLS_RSA_WITH_AES_128_CBC_SHA (rsa 1024) - F
+|       TLS_RSA_WITH_AES_256_CBC_SHA (rsa 1024) - F
+|       TLS_RSA_WITH_RC4_128_SHA (rsa 1024) - F
+|       TLS_RSA_WITH_3DES_EDE_CBC_SHA (rsa 1024) - F
+|       TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA (secp256r1) - F
+|       TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA (secp256r1) - F
+|       TLS_RSA_WITH_RC4_128_MD5 (rsa 1024) - F
+|     compressors: 
+|       NULL
+|     cipher preference: server
+|     warnings: 
+|       64-bit block cipher 3DES vulnerable to SWEET32 attack
+|       Broken cipher RC4 is deprecated by RFC 7465
+|       Ciphersuite uses MD5 for message integrity
+|       Insecure certificate signature (SHA1), score capped at F
+|_  least strength: F
+|_ssl-date: 2023-05-12T00:00:19+00:00; -23s from scanner time.
+| ssl-poodle: 
+|   VULNERABLE:
+|   SSL POODLE information leak
+|     State: VULNERABLE
+|     IDs:  CVE:CVE-2014-3566  BID:70574
+|           The SSL protocol 3.0, as used in OpenSSL through 1.0.1i and other
+|           products, uses nondeterministic CBC padding, which makes it easier
+|           for man-in-the-middle attackers to obtain cleartext data via a
+|           padding-oracle attack, aka the "POODLE" issue.
+|     Disclosure date: 2014-10-14
+|     Check results:
+|       TLS_RSA_WITH_3DES_EDE_CBC_SHA
+|     References:
+|       https://www.imperialviolet.org/2014/10/14/poodle.html
+|       https://www.openssl.org/~bodo/ssl-poodle.pdf
+|       https://www.securityfocus.com/bid/70574
+|_      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-3566
+| ms-sql-ntlm-info: 
+|   10.129.71.224:1433: 
+|     Target_Name: HTB
+|     NetBIOS_Domain_Name: HTB
+|     NetBIOS_Computer_Name: MANTIS
+|     DNS_Domain_Name: htb.local
+|     DNS_Computer_Name: mantis.htb.local
+|     DNS_Tree_Name: htb.local
+|_    Product_Version: 6.1.7601
+| ms-sql-dump-hashes: 
+|_  10.129.71.224:1433: ERROR: Bad username or password
+| ms-sql-empty-password: 
+|   10.129.71.224:1433: 
+|_    'sa' account password is not blank.
+| ssl-cert: Subject: commonName=SSL_Self_Signed_Fallback
+| Issuer: commonName=SSL_Self_Signed_Fallback
+| Public Key type: rsa
+| Public Key bits: 1024
+| Signature Algorithm: sha1WithRSAEncryption
+| Not valid before: 2023-05-11T23:36:27
+| Not valid after:  2053-05-11T23:36:27
+| MD5:   a8e2989860192cc5af26cab1c1f56f05
+| SHA-1: 2d2990621073af13397ddb23fbf53c496df25096
+| -----BEGIN CERTIFICATE-----
+| MIIB+zCCAWSgAwIBAgIQd44kuyb9D75C5EcjFsaBezANBgkqhkiG9w0BAQUFADA7
+| MTkwNwYDVQQDHjAAUwBTAEwAXwBTAGUAbABmAF8AUwBpAGcAbgBlAGQAXwBGAGEA
+| bABsAGIAYQBjAGswIBcNMjMwNTExMjMzNjI3WhgPMjA1MzA1MTEyMzM2MjdaMDsx
+| OTA3BgNVBAMeMABTAFMATABfAFMAZQBsAGYAXwBTAGkAZwBuAGUAZABfAEYAYQBs
+| AGwAYgBhAGMAazCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxHuOL/+7sW4J
+| sqTTs1iF9xGCX8VUMWdPYuhUBkVrEgfPEEhVn2gBRRn3IHzMZHDQUyaVpkdS+JeD
+| /DMeC1JLp6nQVgLNT6sK669e/OvNi756n7Xzpwur+RvgJl8Deurj3G94NYkpdxJc
+| yEvqHTiCECF2C1a5v3Vp1dX2GvjAVIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQAV
+| ver/Y6Y3PnHWBDbBVNkWk5atjijYXuxfu2o3IjWY4XFfJDtP1apcFTvgt9iekh0b
+| zMhjOuFL0y/EYlLROm6fxcPiE7z1wc1sMRgisGMpd2SvOmfDDyPIGVRQbfjwnX2J
+| F5fDWY844/KMh6bHrdQbrLfw9SDV9WOiGJyseCzosw==
+|_-----END CERTIFICATE-----
+| ms-sql-tables: 
+|   10.129.71.224:1433: 
+|_[10.129.71.224:1433]
+| ms-sql-xp-cmdshell: 
+|_  (Use --script-args=ms-sql-xp-cmdshell.cmd='<CMD>' to change command.)
+| ms-sql-query: 
+|_  (Use --script-args=ms-sql-query.query='<QUERY>' to change query.)
+| ms-sql-config: 
+|   10.129.71.224:1433: 
+|_  ERROR: Bad username or password
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Read data files from: /usr/bin/../share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Fri May 12 12:01:01 2023 -- 1 IP address (1 host up) scanned in 41.08 seconds
