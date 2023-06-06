@@ -1,5 +1,5 @@
 [applications@corp.thereserve.loc](mailto:applications@corp.thereserve.loc)
-mailto:applications@corp.thereserve.loc
+
 From contact us page. It looks like the domain of the MailServer
 
 # Create userlist
@@ -9,7 +9,7 @@ sed 's/$/@corp.thereserve.loc/' usernames.txt > usernames-domain.txt
 ```
 # Create password list
 ```bash
-❯ cat Capstone_Challenge_Resources/password_base_list.txt
+cat Capstone_Challenge_Resources/password_base_list.txt
 TheReserve
 thereserve
 Reserve

