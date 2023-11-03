@@ -114,4 +114,60 @@ sudo smbclient -L //hathor.windcorp.htb -U beatricemill@windcorp.htb -N
         share           Disk      
         SYSVOL          Disk      Logon server share 
 SMB1 disabled -- no workgroup available
+
+sudo klist
+Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: beatricemill@WINDCORP.HTB
+
+Valid starting     Expires            Service principal
+03/11/23 14:21:32  04/11/23 00:21:32  krbtgt/WINDCORP.HTB@WINDCORP.HTB
+        renew until 04/11/23 14:21:11
+03/11/23 14:36:16  04/11/23 00:21:32  cifs/hathor.windcorp.htb@WINDCORP.HTB
+        renew until 04/11/23 14:21:11
 ```
+
+One thing need to be remind, TO turn it on&off the switch
+
+```conf
+# HTB box
+# nameserver 10.129.47.158 	<- for using kinit to get a ticket
+nameserver 10.10.16.2 		<- for running the smbclient	
+```
+
+##### Looking in to the share
+```bash
+sudo smbclient //hathor.windcorp.htb/share -U beatricemill@windcorp.htb -N
+Try "help" to get a list of possible commands.
+smb: \> dir
+  .                                   D        0  Fri Nov  3 14:43:25 2023
+  ..                                DHS        0  Wed Apr 20 00:45:15 2022
+  AutoIt3_x64.exe                     A  1013928  Fri Mar 16 02:17:44 2018
+  Bginfo64.exe                        A  4601208  Fri Sep 20 08:15:38 2019
+  scripts                             D        0  Tue Mar 22 10:22:59 2022
+
+
+smb: \scripts\> dir
+  .                                   D        0  Tue Mar 22 10:22:59 2022
+  ..                                  D        0  Fri Nov  3 14:53:25 2023
+  7-zip64.dll                         A  1076736  Tue Mar 22 02:43:58 2022
+  7Zip.au3                            A    54739  Fri Oct 19 09:02:02 2012
+  ZipExample.zip                      A     2333  Sun Oct  7 10:50:30 2012
+  _7ZipAdd_Example.au3                A     1794  Mon Oct  8 00:15:16 2012
+  _7ZipAdd_Example_using_Callback.au3      A     1855  Mon Oct  8 00:17:14 2012
+  _7ZipDelete_Example.au3             A      334  Sun Oct  7 14:37:38 2012
+  _7ZIPExtractEx_Example.au3          A      859  Sun Oct  7 14:38:10 2012
+  _7ZIPExtractEx_Example_using_Callback.au3      A     1867  Sun Oct  7 12:04:14 2012
+  _7ZIPExtract_Example.au3            A      830  Sun Oct  7 14:37:50 2012
+  _7ZipFindFirst__7ZipFindNext_Example.au3      A     2027  Sun Oct  7 12:05:12 2012
+  _7ZIPUpdate_Example.au3             A      372  Sun Oct  7 14:39:04 2012
+  _Archive_Size.au3                   A      886  Sun Jan 23 22:51:45 2022
+  _CheckExample.au3                   A      201  Sun Oct  7 12:51:30 2012
+  _GetZipListExample.au3              A      144  Sun Oct  7 14:39:22 2012
+  _MiscExamples.au3                   A      498  Fri Nov 28 05:04:30 2008
+
+                10328063 blocks of size 4096. 2270930 blocks available
+```
+
+Inside the share there are two executables and one directory called scripts . Judging from the names of
+the files the Bginfo64.exe is the BgInfo tool from Sysinternals and the AutoIt3_x64.exe file turns out to
+be the AutoIT scripting framework.
