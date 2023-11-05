@@ -140,8 +140,8 @@ One thing need to be remind, TO turn it on&off the switch
 
 ```conf
 # HTB box
-# nameserver 10.129.47.158 	<- for using kinit to get a ticket
-nameserver 10.10.16.2 		<- for running the smbclient	
+# nameserver 10.129.47.158 	<- for using kinit to get a ticket by putting victim's address
+nameserver 10.10.16.2 		<- for running the smbclient. it's need by using Wireshark to investigate	
 ```
 
 ##### Alternatively using Impacket
