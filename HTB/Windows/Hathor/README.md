@@ -14,7 +14,7 @@ Domain: windcorp.htb0
 
 # Shell as windcorp/web
 ### Webshell
-80 -> Web title -> Google default creds -> File Transfer
+80 -> Web title -> Google default creds (admin@admin.com:admin) -> File Transfer
 
 Upload webshell -> bypassing by adding `%00.jpg` -> "Copy" the file inorder to rename to get the `.aspx` extenstion.
 
