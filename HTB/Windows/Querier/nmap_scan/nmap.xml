@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.94SVN scan initiated Wed Nov 22 11:25:17 2023 as: nmap -sC -sV -oA nmap -p 135,139,445,1433,5985,47001,49664,49666,49665,49669,49667,49668,49671,49670 10.129.141.62 -->
+<nmaprun scanner="nmap" args="nmap -sC -sV -oA nmap -p 135,139,445,1433,5985,47001,49664,49666,49665,49669,49667,49668,49671,49670 10.129.141.62" start="1700605517" startstr="Wed Nov 22 11:25:17 2023" version="7.94SVN" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="14" services="135,139,445,1433,5985,47001,49664-49671"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<hosthint><status state="up" reason="unknown-response" reason_ttl="0"/>
+<address addr="10.129.141.62" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</hosthint>
+<host starttime="1700605530" endtime="1700605601"><status state="up" reason="echo-reply" reason_ttl="127"/>
+<address addr="10.129.141.62" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="135"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="139"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="netbios-ssn" product="Microsoft Windows netbios-ssn" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="445"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="microsoft-ds" method="table" conf="3"/></port>
+<port protocol="tcp" portid="1433"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="ms-sql-s" product="Microsoft SQL Server 2017" version="14.00.1000.00; RTM" method="probed" conf="10"><cpe>cpe:/a:microsoft:sql_server:2017</cpe></service><script id="ms-sql-info" output="&#xa;  10.129.141.62:1433: &#xa;    Version: &#xa;      name: Microsoft SQL Server 2017 RTM&#xa;      number: 14.00.1000.00&#xa;      Product: Microsoft SQL Server 2017&#xa;      Service pack level: RTM&#xa;      Post-SP patches applied: false&#xa;    TCP port: 1433"><table key="10.129.141.62:1433">
+<table key="Version">
+<elem key="name">Microsoft SQL Server 2017 RTM</elem>
+<elem key="number">14.00.1000.00</elem>
+<elem key="Product">Microsoft SQL Server 2017</elem>
+<elem key="Service pack level">RTM</elem>
+<elem key="Post-SP patches applied">false</elem>
+</table>
+<elem key="TCP port">1433</elem>
+</table>
+</script><script id="ms-sql-ntlm-info" output="&#xa;  10.129.141.62:1433: &#xa;    Target_Name: HTB&#xa;    NetBIOS_Domain_Name: HTB&#xa;    NetBIOS_Computer_Name: QUERIER&#xa;    DNS_Domain_Name: HTB.LOCAL&#xa;    DNS_Computer_Name: QUERIER.HTB.LOCAL&#xa;    DNS_Tree_Name: HTB.LOCAL&#xa;    Product_Version: 10.0.17763"><table key="10.129.141.62:1433">
+<elem key="Target_Name">HTB</elem>
+<elem key="NetBIOS_Domain_Name">HTB</elem>
+<elem key="NetBIOS_Computer_Name">QUERIER</elem>
+<elem key="DNS_Domain_Name">HTB.LOCAL</elem>
+<elem key="DNS_Computer_Name">QUERIER.HTB.LOCAL</elem>
+<elem key="DNS_Tree_Name">HTB.LOCAL</elem>
+<elem key="Product_Version">10.0.17763</elem>
+</table>
+</script><script id="ssl-cert" output="Subject: commonName=SSL_Self_Signed_Fallback&#xa;Not valid before: 2023-11-21T20:11:38&#xa;Not valid after:  2053-11-21T20:11:38"><table key="subject">
+<elem key="commonName">\x00S\x00S\x00L\x00_\x00S\x00e\x00l\x00f\x00_\x00S\x00i\x00g\x00n\x00e\x00d\x00_\x00F\x00a\x00l\x00l\x00b\x00a\x00c\x00k</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">\x00S\x00S\x00L\x00_\x00S\x00e\x00l\x00f\x00_\x00S\x00i\x00g\x00n\x00e\x00d\x00_\x00F\x00a\x00l\x00l\x00b\x00a\x00c\x00k</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">BD0C7139F81B9A449CDF9F5448DE254B673AA79B4049A8EA5436FE14EC1D0F34D2A1BA04BE4AA85AF80089BB5B947EBC77F69054B742248F96460B8FA416D2773AE52BEC4C44CD79ADE0AF34E259FFC31195B533C256D797FE2F9BF0B4F95021EFFB5375BD1D68F58338FF344E3837FAC5F6CA5953D3B0371EDC1A3B485B3F86792358DE02B109A94578CFFE724F488413A5B1174B9E08305BE13C8CCA9C7F09428C8127D7B0F8EDD54AA757BE7C1FA67F01D0BC59401D1D0AB3DD7A40F6031DBF6CB29D2D645A6A63AC0295743A61E29122AD346A85806F49275FCBEC3D837EA3057AFD361513765CEE49C7218C4B9358455C2FD8A53FC7978E6D25368C11F1</elem>
+<elem key="exponent">65537</elem>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2023-11-21T20:11:38</elem>
+<elem key="notAfter">2053-11-21T20:11:38</elem>
+</table>
+<elem key="md5">a905ba31ea18e29cc372348d6a1bd844</elem>
+<elem key="sha1">f3f1b972f2c5223e1731779c6ca24b13b8bcfda0</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIDADCCAeigAwIBAgIQElDuMieTa6BOJ+F4CS5IbDANBgkqhkiG9w0BAQsFADA7&#xa;MTkwNwYDVQQDHjAAUwBTAEwAXwBTAGUAbABmAF8AUwBpAGcAbgBlAGQAXwBGAGEA&#xa;bABsAGIAYQBjAGswIBcNMjMxMTIxMjAxMTM4WhgPMjA1MzExMjEyMDExMzhaMDsx&#xa;OTA3BgNVBAMeMABTAFMATABfAFMAZQBsAGYAXwBTAGkAZwBuAGUAZABfAEYAYQBs&#xa;AGwAYgBhAGMAazCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL0McTn4&#xa;G5pEnN+fVEjeJUtnOqebQEmo6lQ2/hTsHQ800qG6BL5KqFr4AIm7W5R+vHf2kFS3&#xa;QiSPlkYLj6QW0nc65SvsTETNea3grzTiWf/DEZW1M8JW15f+L5vwtPlQIe/7U3W9&#xa;HWj1gzj/NE44N/rF9spZU9OwNx7cGjtIWz+GeSNY3gKxCalFeM/+ck9IhBOlsRdL&#xa;nggwW+E8jMqcfwlCjIEn17D47dVKp1e+fB+mfwHQvFlAHR0Ks916QPYDHb9ssp0t&#xa;ZFpqY6wClXQ6YeKRIq00aoWAb0knX8vsPYN+owV6/TYVE3Zc7knHIYxLk1hFXC/Y&#xa;pT/Hl45tJTaMEfECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAt/TRIe3jo0QRQMNY&#xa;nms+q+eO/M2aBc2Jn1+jOrb3Njz2aEaaKcyu2D4GqsRnpduPFPgBwUXkRuuRW+th&#xa;bjhA9H23uOT6cgj/U6E4zci5lfuAgbh/FcRYqx0jGdkhLX+1+hok7SF9ycVkjl9Q&#xa;CBqk9DEz1pInbM78aBb8NCvkCwVCB56KYXoJX6NL/o2H+ZFPgrJy/wBsE1UeYSaN&#xa;nPPyN5sm9EffY6SiPDK6R9VSoI4luxDBvBtBv6FYRGdox1kJ+OHjHqD2s7Umky6X&#xa;YDvZP/4GM/yoycCZfx1HXDHd2GffnRuBY+FDODT8XUUHvoo0ns5rwNgzrwvwDQnh&#xa;46sXhg==&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="ssl-date" output="2023-11-21T23:26:26+00:00; +59m45s from scanner time."><elem key="date">2023-11-21T23:26:26+00:00</elem>
+<elem key="delta">3585.0</elem>
+</script></port>
+<port protocol="tcp" portid="5985"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="http" product="Microsoft HTTPAPI httpd" version="2.0" extrainfo="SSDP/UPnP" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service><script id="http-title" output="Not Found"><elem key="title">Not Found</elem>
+</script><script id="http-server-header" output="Microsoft-HTTPAPI/2.0"><elem>Microsoft-HTTPAPI/2.0</elem>
+</script></port>
+<port protocol="tcp" portid="47001"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="http" product="Microsoft HTTPAPI httpd" version="2.0" extrainfo="SSDP/UPnP" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service><script id="http-server-header" output="Microsoft-HTTPAPI/2.0"><elem>Microsoft-HTTPAPI/2.0</elem>
+</script><script id="http-title" output="Not Found"><elem key="title">Not Found</elem>
+</script></port>
+<port protocol="tcp" portid="49664"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49665"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49666"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49667"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49668"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49669"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49670"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49671"><state state="open" reason="syn-ack" reason_ttl="127"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+</ports>
+<hostscript><script id="smb2-time" output="&#xa;  date: 2023-11-21T23:26:17&#xa;  start_date: N/A"><elem key="date">2023-11-21T23:26:17</elem>
+<elem key="start_date">N/A</elem>
+</script><script id="clock-skew" output="mean: 59m45s, deviation: 0s, median: 59m44s"><elem key="median">3584</elem>
+<elem key="stddev">0</elem>
+<elem key="mean">3585</elem>
+<elem key="count">3</elem>
+</script><script id="smb2-security-mode" output="&#xa;  3:1:1: &#xa;    Message signing enabled but not required"><table key="3:1:1">
+<elem>Message signing enabled but not required</elem>
+</table>
+</script></hostscript><times srtt="352079" rttvar="83493" to="686051"/>
+</host>
+<runstats><finished time="1700605601" timestr="Wed Nov 22 11:26:41 2023" summary="Nmap done at Wed Nov 22 11:26:41 2023; 1 IP address (1 host up) scanned in 84.58 seconds" elapsed="84.58" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

