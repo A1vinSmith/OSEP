@@ -1,0 +1,18 @@
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[34m[*][0m Windows 10.0 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False)
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[32m[+][0m flight.htb\svc_apache:S@Ss!K@*t13 [1m[33m[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[32m[+][0m Enumerated domain user(s)
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\O.Possum                       badpwdcount: 0 desc: Helpdesk[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\svc_apache                     badpwdcount: 0 desc: Service Apache web[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\V.Stevens                      badpwdcount: 0 desc: Secretary[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\D.Truff                        badpwdcount: 0 desc: Project Manager[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\I.Francis                      badpwdcount: 0 desc: Nobody knows why he's here[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\W.Walker                       badpwdcount: 0 desc: Payroll officer[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\C.Bum                          badpwdcount: 2 desc: Senior Web Developer[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\M.Gold                         badpwdcount: 0 desc: Sysadmin[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\L.Kein                         badpwdcount: 0 desc: Penetration tester[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\G.Lors                         badpwdcount: 0 desc: Sales manager[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\R.Cold                         badpwdcount: 0 desc: HR Assistant[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\S.Moon                         badpwdcount: 0 desc: Junion Web Developer[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\krbtgt                         badpwdcount: 0 desc: Key Distribution Center Service Account[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\Guest                          badpwdcount: 0 desc: Built-in account for guest access to the computer/domain[0m
+[1m[34mSMB[0m         flight.htb      445    G0               [1m[33mflight.htb\Administrator                  badpwdcount: 0 desc: Built-in account for administering the computer/domain[0m
