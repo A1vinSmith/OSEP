@@ -480,7 +480,9 @@ Global Group memberships     *Domain Users         *CORE STAFF
 The command completed successfully.
 ```
 
-##### Read LAPS Password with 3 different ways
+##### Read LAPS Password with 5 different ways if creds need
+If user alredy in the group then no cred needed just read it * https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/laps
+
 1. cme
 2. ldapsearch
 3. pyLAPS.py
