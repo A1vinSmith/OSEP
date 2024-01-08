@@ -332,3 +332,20 @@ SMB         flight.htb      445    G0               Web             READ,WRITE
 smbclient //$IP/Users -U=C.Bum%'Tikkycoll_431012284'
 smb: \C.Bum\Desktop\> get user.txt
 ```
+
+# Shell as C.Bum
+Reverse shell is fine or cmd shell then nc.exe
+
+* https://github.com/ivan-sincek/php-reverse-shell
+* https://rootjaxk.github.io/posts/Flight/#getting-a-reverse-shell
+* https://fluff.me/posts/writeups/htb/hackthebox-flight/#smb-as-cbum
+* https://0xdf.gitlab.io/2023/05/06/htb-flight.html#shell-as-cbum
+
+But I'll try silver C2 this time. The HTB pdf is pretty good surprisingly. 
+
+We have code execution, but we want a more stable shell. We are going to use the sliver C2 framework. 
+Sliver is a nice option because, by default, it obfuscates the generated implants. 
+So in the event that Windows Defender is installed it may be possible to execute it without getting detected. 
+To install sliver all you have to do is run the following command.
+
+However I'm on M1 chip, next major version of silver will start to support it. I'll wait for that.
