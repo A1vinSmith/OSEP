@@ -1,3 +1,6 @@
+
+<img width="1053" alt="Screenshot 2024-04-14 at 8 07 55 AM" src="https://github.com/A1vinSmith/OSEP/assets/24937594/eb1cdeff-f122-469c-b25d-174cf8e3ed01">
+
 # OSEP
 Notes and cheatsheets are in Wiki pages.
 
